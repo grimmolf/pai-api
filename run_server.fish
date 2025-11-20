@@ -12,7 +12,12 @@ source venv/bin/activate.fish
 
 # Load .env variables if present for local overrides
 if test -f .env
-    export (cat .env | grep -v "^#" | xargs)
+    for line in (cat .env | grep -v '^#' | string match -r '.')
+        set parts (string split -m 1 "=" $line)
+        if test (count $parts) -eq 2
+            set -gx $parts[1] (string trim --chars='"' $parts[2])
+        end
+    end
 end
 
 echo "Starting Bob API Server on port $PAI_PORT..."

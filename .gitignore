@@ -8,3 +8,5 @@ logs/
 .taskmaster/docs/
 .taskmaster/reports/
 .taskmaster/tasks/
+data/
+agent-responses/

@@ -8,10 +8,23 @@
     owner: "{{ ansible_user_id }}"
     mode: '0755'
 
-# Using synchronization for local development -> remote (faster than git clone if iterating)
-# But for production, git clone is better. 
-# We will assume git clone for now as per requirements.
+# Rsync deployment (for local development)
+- name: Sync Files via Rsync
+  ansible.posix.synchronize:
+    src: "{{ rsync_source }}"
+    dest: "{{ deploy_dir }}"
+    delete: yes
+    recursive: yes
+    rsync_opts:
+      - "--exclude=venv"
+      - "--exclude=__pycache__"
+      - "--exclude=*.pyc"
+      - "--exclude=.env"
+      - "--exclude=logs"
+      - "--exclude=.git"
+  when: use_rsync | default(false) | bool
 
+# Git clone deployment (for production)
 - name: Clone Repository
   ansible.builtin.git:
     repo: "{{ git_repo_url }}"
@@ -19,15 +32,38 @@
     version: "{{ git_branch | default('master') }}"
     update: yes
     force: yes
+  when: not (use_rsync | default(false) | bool)
 
 - name: Create Virtual Environment
   ansible.builtin.command:
-    cmd: python3.12 -m venv venv
-    args:
-      creates: "{{ deploy_dir }}/venv"
-      chdir: "{{ deploy_dir }}"
+    cmd: python3 -m venv venv
+    creates: "{{ deploy_dir }}/venv"
+    chdir: "{{ deploy_dir }}"
 
 - name: Install Requirements
   ansible.builtin.pip:
     requirements: "{{ deploy_dir }}/requirements.txt"
     virtualenv: "{{ deploy_dir }}/venv"
+
+- name: Create Data Directory for Database
+  ansible.builtin.file:
+    path: "{{ deploy_dir }}/data"
+    state: directory
+    owner: "{{ ansible_user_id }}"
+    mode: '0750'
+
+- name: Initialize Database Schema
+  ansible.builtin.command:
+    cmd: "{{ deploy_dir }}/venv/bin/python -c 'from src.db.connection import get_db_connection; from src.db.models import CREATE_TABLES_SQL; conn = get_db_connection().get_sync_connection(); conn.executescript(CREATE_TABLES_SQL); conn.close(); print(\"Database initialized\")'"
+    chdir: "{{ deploy_dir }}"
+  environment:
+    PAI_DB_PATH: "{{ deploy_dir }}/data/messages.db"
+  register: db_init_result
+  changed_when: "'Database initialized' in db_init_result.stdout"
+
+- name: Set Database File Permissions
+  ansible.builtin.file:
+    path: "{{ deploy_dir }}/data/messages.db"
+    owner: "{{ ansible_user_id }}"
+    mode: '0640'
+  when: db_init_result is succeeded

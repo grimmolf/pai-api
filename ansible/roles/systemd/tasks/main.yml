@@ -1,6 +1,11 @@
 ---
 # tasks file for systemd
 
+- name: Skip Systemd on macOS
+  ansible.builtin.debug:
+    msg: "Systemd not available on macOS - skipping service configuration"
+  when: ansible_os_family == "Darwin"
+
 - name: Copy Systemd Service File
   ansible.builtin.template:
     src: pai-api.service.j2
@@ -8,11 +13,13 @@
     mode: '0644'
   become: true
   notify: Restart PAI Service
+  when: ansible_os_family != "Darwin"
 
 - name: Reload Systemd Daemon
   ansible.builtin.systemd:
     daemon_reload: yes
   become: true
+  when: ansible_os_family != "Darwin"
 
 - name: Enable and Start PAI Service
   ansible.builtin.systemd:
@@ -20,3 +27,4 @@
     enabled: yes
     state: started
   become: true
+  when: ansible_os_family != "Darwin"

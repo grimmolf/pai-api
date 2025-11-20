@@ -45,13 +45,25 @@ graph LR
    ./run_server.fish
    ```
 
-4. **Configure MCP**:
-   Add the following to your Claude/Cursor config:
-   ```json
-   "pai-bridge": {
-     "command": "/absolute/path/to/pai-api/run_mcp.fish"
-   }
+4. **Configure MCP** (choose your platform):
+
+   **Cursor IDE**:
+   - Configuration automatically created at `.cursor/mcp.json`
+   - Restart Cursor IDE
+   - Test with: `cursor-agent mcp list`
+
+   **Claude Code**:
+   ```fish
+   ./scripts/setup-claude-code-mcp.fish
+   # Or manually:
+   # claude mcp add pai-api --scope user --env PAI_API_KEY=$PAI_API_KEY -- python src/mcp_server.py
    ```
+
+   **Gemini CLI**:
+   - Configuration automatically created at `.gemini/settings.json`
+   - Test with: `gemini mcp list`
+
+   **Detailed Setup**: See [MCP Configuration Guide](docs/MCP_SETUP.md)
 
 ## Development
 

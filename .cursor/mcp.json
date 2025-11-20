@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "pai-api": {
+      "command": "python",
+      "args": ["src/mcp_server.py"],
+      "cwd": "/Volumes/owc-express/Documents/business/coding/gits/active/pai-api",
+      "env": {
+        "PAI_PORT": "8000",
+        "PAI_SYSTEM_NAME": "bob",
+        "PAI_API_KEY": "${env:PAI_API_KEY}",
+        "PAI_REMOTE_PAI_URL": "${env:PAI_REMOTE_PAI_URL}",
+        "PAI_REMOTE_PAI_API_KEY": "${env:PAI_REMOTE_PAI_API_KEY}"
+      }
+    }
+  }
+}
