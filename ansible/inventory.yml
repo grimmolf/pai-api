@@ -2,23 +2,17 @@ all:
   children:
     pai_nodes:
       hosts:
-        shale:
-          ansible_host: shale.local
-          ansible_user: shalegreysson
-          pai_system_name: Patterson
-          pai_port: 8000
-          pai_remote_url: "http://grimm.local:8000"
+        # Example host definition
+        # my_pai_instance:
+        #   ansible_host: 192.168.1.x
+        #   ansible_user: user
+        #   pai_system_name: MyPAI
+        #   pai_port: 8000
+        #   pai_remote_url: "http://other-pai.local:8000"
 
-        patterson:
-          ansible_host: shale-mini.local
-          ansible_user: shale
-          pai_system_name: Patterson
-          pai_port: 8000
-          pai_remote_url: "http://grimm.local:8000"
-
-        bob:
+        localhost:
           ansible_connection: local
-          pai_system_name: Bob
+          pai_system_name: LocalPAI
           pai_port: 8000
-          pai_remote_url: "http://shale.local:8000"
+
 
