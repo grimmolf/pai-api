@@ -1,0 +1,33 @@
+---
+# tasks file for app_deploy
+
+- name: Ensure Project Directory Exists
+  ansible.builtin.file:
+    path: "{{ deploy_dir }}"
+    state: directory
+    owner: "{{ ansible_user_id }}"
+    mode: '0755'
+
+# Using synchronization for local development -> remote (faster than git clone if iterating)
+# But for production, git clone is better. 
+# We will assume git clone for now as per requirements.
+
+- name: Clone Repository
+  ansible.builtin.git:
+    repo: "{{ git_repo_url }}"
+    dest: "{{ deploy_dir }}"
+    version: "{{ git_branch | default('master') }}"
+    update: yes
+    force: yes
+
+- name: Create Virtual Environment
+  ansible.builtin.command:
+    cmd: python3.12 -m venv venv
+    args:
+      creates: "{{ deploy_dir }}/venv"
+      chdir: "{{ deploy_dir }}"
+
+- name: Install Requirements
+  ansible.builtin.pip:
+    requirements: "{{ deploy_dir }}/requirements.txt"
+    virtualenv: "{{ deploy_dir }}/venv"

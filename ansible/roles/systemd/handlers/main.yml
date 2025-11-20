@@ -1,0 +1,8 @@
+---
+# handlers file for systemd
+
+- name: Restart PAI Service
+  ansible.builtin.systemd:
+    name: pai-api
+    state: restarted
+  become: true

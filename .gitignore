@@ -3,3 +3,8 @@ __pycache__/
 *.pyc
 .env
 .pytest_cache/
+logs/
+*.log
+.taskmaster/docs/
+.taskmaster/reports/
+.taskmaster/tasks/

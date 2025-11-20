@@ -1,0 +1,15 @@
+[Unit]
+Description=PAI API Service ({{ pai_system_name }})
+After=network.target
+
+[Service]
+User={{ ansible_user_id }}
+WorkingDirectory={{ deploy_dir }}
+EnvironmentFile={{ deploy_dir }}/.env
+ExecStart={{ deploy_dir }}/venv/bin/uvicorn src.main:app --host 0.0.0.0 --port {{ pai_port }}
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+

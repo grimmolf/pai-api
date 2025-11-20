@@ -1,0 +1,40 @@
+---
+# tasks file for prerequisites
+
+- name: Check OS Family
+  ansible.builtin.debug:
+    msg: "Deploying to {{ ansible_os_family }} system"
+
+# macOS Specific (Homebrew)
+- name: Install Python 3.12 via Homebrew (macOS)
+  community.general.homebrew:
+    name: python@3.12
+    state: present
+  when: ansible_os_family == "Darwin"
+
+# Linux Specific (APT)
+- name: Install Python dependencies (Debian/Ubuntu)
+  ansible.builtin.apt:
+    name:
+      - python3.11
+      - python3.11-venv
+      - python3-pip
+      - git
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+  become: true
+
+- name: Create PAI Service User (Linux)
+  ansible.builtin.user:
+    name: pai
+    shell: /bin/bash
+    home: /opt/pai
+    create_home: yes
+    system: yes
+  when: ansible_os_family == "Debian"
+  become: true
+
+# macOS user handling is usually the login user, so we skip creating a 'pai' user on macOS 
+# unless we strictly want a daemon user, but launchd usually runs as the login user for user-agents.
+# We will assume for macOS we deploy to the current user's home or a specific directory.

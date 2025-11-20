@@ -8,6 +8,7 @@ The Bob-Patterson Communication Bridge replaces a legacy SSH/File-based message 
 3. **Identity Verification**: API Key authentication via `X-PAI-API-Key` header.
 4. **MCP Integration**: Tools for "Send Message" and "Check Status" exposed directly to the AI personalities (Claude).
 5. **Service Discovery**: Support for mDNS (`.local` hostnames) to handle dynamic IPs.
+6. **Infrastructure as Code**: Deployment automated via Ansible playbooks.
 
 # User Experience
 **Bob (User Perspective)**:
@@ -24,6 +25,7 @@ The Bob-Patterson Communication Bridge replaces a legacy SSH/File-based message 
 -   Zero maintenance on file permissions.
 -   Logs available via standard stdout/stderr or log files.
 -   Configuration via `.env`.
+-   Deployment via `ansible-playbook`.
 </context>
 <PRD>
 # Technical Architecture
@@ -56,12 +58,18 @@ The Bob-Patterson Communication Bridge replaces a legacy SSH/File-based message 
 -   Robust HTTP Client with `httpx`.
 -   Unit tests for Server and Client.
 
-**Phase 3: Integration (In Progress)**
+**Phase 3: Integration (Completed)**
 -   MCP Server wrapper implementation.
 -   End-to-end testing between two local instances.
 -   Deployment scripts (`run_server.fish`, `run_mcp.fish`).
+-   Logging and Error Reporting.
 
-**Phase 4: Advanced Features (Future)**
+**Phase 4: Infrastructure (New)**
+-   Ansible Playbook for deploying the API to remote hosts.
+-   Systemd service configuration (via Ansible).
+-   Environment variable management (via Ansible vars).
+
+**Phase 5: Advanced Features (Future)**
 -   Message persistence (SQLite database).
 -   Context injection (pushing messages directly into the AI's active context window if supported).
 -   Webhooks for third-party integrations.
@@ -72,6 +80,7 @@ The Bob-Patterson Communication Bridge replaces a legacy SSH/File-based message 
 3.  **Auth Configuration**: Keys must be generated and synced in `.env`.
 4.  **Client Implementation**: Depends on Server API contract.
 5.  **MCP Wrapper**: Depends on Client function signatures.
+6.  **Deployment**: Depends on stable codebase and requirements.txt.
 
 # Risks and Mitigations
 1.  **Network Instability**: Local LAN might drop.
@@ -86,5 +95,5 @@ The Bob-Patterson Communication Bridge replaces a legacy SSH/File-based message 
 # Appendix
 -   **FastAPI Docs**: https://fastapi.tiangolo.com/
 -   **MCP Protocol**: https://modelcontextprotocol.io/
+-   **Ansible**: https://docs.ansible.com/
 </PRD>
-

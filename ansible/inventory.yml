@@ -1,0 +1,17 @@
+all:
+  children:
+    pai_nodes:
+      hosts:
+        patterson:
+          ansible_host: shale-mini.local
+          ansible_user: shale
+          pai_system_name: Patterson
+          pai_port: 8000
+          pai_remote_url: "http://grimm.local:8000"
+        
+        bob:
+          ansible_connection: local
+          pai_system_name: Bob
+          pai_port: 8000
+          pai_remote_url: "http://shale-mini.local:8000"
+

@@ -1,16 +1,25 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import SecretStr, Field
 from functools import lru_cache
 
 class Settings(BaseSettings):
-    API_KEY: str = "dev-key"  # Local API Key
-    SYSTEM_NAME: str = "Bob"
-    PORT: int = 8000
+    # System Identity
+    SYSTEM_NAME: str = Field(default="Bob", description="Name of the local PAI identity")
     
-    # Remote Configuration
-    REMOTE_PAI_URL: str = "http://localhost:8000" # Default to self for testing
-    REMOTE_PAI_API_KEY: str = "dev-key"
+    # Server Config
+    PORT: int = Field(default=8000, description="Port to run the local API server on")
+    API_KEY: SecretStr = Field(default=SecretStr("dev-key"), description="Local API Key for authentication")
     
-    model_config = SettingsConfigDict(env_prefix="PAI_", env_file=".env")
+    # Remote Config
+    REMOTE_PAI_URL: str = Field(default="http://localhost:8000", description="Full URL of the remote PAI instance")
+    REMOTE_PAI_API_KEY: SecretStr = Field(default=SecretStr("dev-key"), description="API Key for the remote PAI instance")
+    
+    model_config = SettingsConfigDict(
+        env_prefix="PAI_", 
+        env_file=".env", 
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
 
 @lru_cache()
 def get_settings():

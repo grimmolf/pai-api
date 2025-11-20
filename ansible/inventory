@@ -1,0 +1,10 @@
+[pai_nodes]
+# Add your target hosts here
+# example-host ansible_host=192.168.0.x ansible_user=username
+
+[bob]
+# localhost ansible_connection=local
+
+[patterson]
+# remote-host ansible_host=x.x.x.x ansible_user=username
+
