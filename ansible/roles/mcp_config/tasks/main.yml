@@ -48,9 +48,28 @@
     owner: "{{ ansible_user_id }}"
     mode: '0755'
 
-- name: Deploy Cursor MCP configuration
-  ansible.builtin.template:
-    src: cursor_mcp.json.j2
+- name: Check if global Cursor MCP config exists
+  ansible.builtin.stat:
+    path: "{{ ansible_user_dir }}/.cursor/mcp.json"
+  register: cursor_global_config_stat
+
+- name: Read existing Cursor config
+  ansible.builtin.slurp:
+    src: "{{ ansible_user_dir }}/.cursor/mcp.json"
+  register: existing_cursor_config
+  when: cursor_global_config_stat.stat.exists
+
+- name: Parse existing Cursor config
+  ansible.builtin.set_fact:
+    cursor_config: "{{ (existing_cursor_config.content | b64decode | from_json) if cursor_global_config_stat.stat.exists else {'mcpServers': {}} }}"
+
+- name: Merge pai-api into Cursor MCP servers
+  ansible.builtin.set_fact:
+    cursor_config: "{{ cursor_config | combine({'mcpServers': cursor_config.mcpServers | default({}) | combine({mcp_server_name: {'command': deploy_dir + '/run_mcp.fish', 'args': []}})}, recursive=True) }}"
+
+- name: Write updated Cursor global config
+  ansible.builtin.copy:
+    content: "{{ cursor_config | to_nice_json }}"
     dest: "{{ ansible_user_dir }}/.cursor/mcp.json"
     owner: "{{ ansible_user_id }}"
     mode: '0644'
