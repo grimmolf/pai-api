@@ -1,0 +1,6 @@
+---
+# Default variables for mcp_config role
+
+mcp_server_name: "pai-api"
+mcp_server_description: "Bob-Patterson AI API Bridge"
+mcp_timeout: 30000

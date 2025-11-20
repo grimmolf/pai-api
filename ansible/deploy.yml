@@ -3,12 +3,13 @@
   hosts: pai_nodes
   vars:
     deploy_dir: /opt/pai-api
-    git_repo_url: https://github.com/yourusername/pai-api.git # Change this or use file sync
+    git_repo_url: https://github.com/grimmolf/pai-api.git
     git_branch: master
-  
+
   roles:
     - prerequisites
     - app_deploy
     - config
+    - mcp_config
     - systemd
 

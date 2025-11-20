@@ -1,0 +1,81 @@
+---
+# MCP Configuration tasks
+
+- name: Ensure .gemini directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/.gemini"
+    state: directory
+    owner: "{{ ansible_user_id }}"
+    mode: '0755'
+
+- name: Check if Gemini settings.json exists
+  ansible.builtin.stat:
+    path: "{{ ansible_user_dir }}/.gemini/settings.json"
+  register: gemini_settings_stat
+
+- name: Backup existing Gemini settings
+  ansible.builtin.copy:
+    src: "{{ ansible_user_dir }}/.gemini/settings.json"
+    dest: "{{ ansible_user_dir }}/.gemini/settings.json.backup"
+    remote_src: yes
+  when: gemini_settings_stat.stat.exists
+
+- name: Read existing Gemini settings
+  ansible.builtin.slurp:
+    src: "{{ ansible_user_dir }}/.gemini/settings.json"
+  register: existing_gemini_config
+  when: gemini_settings_stat.stat.exists
+
+- name: Parse existing Gemini settings
+  ansible.builtin.set_fact:
+    gemini_config: "{{ (existing_gemini_config.content | b64decode | from_json) if gemini_settings_stat.stat.exists else {} }}"
+
+- name: Merge MCP server into Gemini config
+  ansible.builtin.set_fact:
+    gemini_config: "{{ gemini_config | combine({'mcpServers': gemini_config.mcpServers | default({}) | combine({mcp_server_name: {'command': deploy_dir + '/run_mcp.fish', 'args': [], 'timeout': mcp_timeout, 'description': mcp_server_description}})}, recursive=True) }}"
+
+- name: Write updated Gemini settings
+  ansible.builtin.copy:
+    content: "{{ gemini_config | to_nice_json }}"
+    dest: "{{ ansible_user_dir }}/.gemini/settings.json"
+    owner: "{{ ansible_user_id }}"
+    mode: '0644'
+
+- name: Ensure .cursor directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/.cursor"
+    state: directory
+    owner: "{{ ansible_user_id }}"
+    mode: '0755'
+
+- name: Deploy Cursor MCP configuration
+  ansible.builtin.template:
+    src: cursor_mcp.json.j2
+    dest: "{{ ansible_user_dir }}/.cursor/mcp.json"
+    owner: "{{ ansible_user_id }}"
+    mode: '0644'
+
+- name: Check if Claude Code is installed
+  ansible.builtin.command:
+    cmd: which claude
+  register: claude_check
+  failed_when: false
+  changed_when: false
+
+- name: Configure Claude Code MCP (if installed)
+  ansible.builtin.command:
+    cmd: "claude mcp add {{ mcp_server_name }} --scope user -- {{ deploy_dir }}/run_mcp.fish"
+  when: claude_check.rc == 0
+  become: yes
+  become_user: "{{ ansible_user_id }}"
+  register: claude_mcp_result
+  failed_when: false
+  changed_when: "'Added' in claude_mcp_result.stdout"
+
+- name: Display MCP configuration status
+  ansible.builtin.debug:
+    msg:
+      - "MCP Configuration Complete:"
+      - "  Gemini CLI: {{ ansible_user_dir }}/.gemini/settings.json"
+      - "  Cursor IDE: {{ ansible_user_dir }}/.cursor/mcp.json"
+      - "  Claude Code: {{ 'Configured' if claude_check.rc == 0 else 'Not installed - skipped' }}"

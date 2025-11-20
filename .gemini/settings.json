@@ -2,9 +2,7 @@
   "mcpServers": {
     "pai-api": {
       "command": "/Volumes/owc-express/Documents/business/coding/gits/active/pai-api/run_mcp.fish",
-      "args": [],
-      "timeout": 30000,
-      "description": "Bob-Patterson AI API Bridge"
+      "args": []
     }
   }
 }
