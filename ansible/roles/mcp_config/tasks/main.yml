@@ -55,22 +55,33 @@
     owner: "{{ ansible_user_id }}"
     mode: '0644'
 
-- name: Check if Claude Code is installed
-  ansible.builtin.command:
-    cmd: which claude
-  register: claude_check
-  failed_when: false
-  changed_when: false
+- name: Check if Claude Code config exists
+  ansible.builtin.stat:
+    path: "{{ ansible_user_dir }}/.claude.json"
+  register: claude_config_stat
 
-- name: Configure Claude Code MCP (if installed)
-  ansible.builtin.command:
-    cmd: "claude mcp add {{ mcp_server_name }} --scope user -- {{ deploy_dir }}/run_mcp.fish"
-  when: claude_check.rc == 0
-  become: yes
-  become_user: "{{ ansible_user_id }}"
-  register: claude_mcp_result
-  failed_when: false
-  changed_when: "'Added' in claude_mcp_result.stdout"
+- name: Read existing Claude Code config
+  ansible.builtin.slurp:
+    src: "{{ ansible_user_dir }}/.claude.json"
+  register: existing_claude_config
+  when: claude_config_stat.stat.exists
+
+- name: Parse existing Claude Code config
+  ansible.builtin.set_fact:
+    claude_config: "{{ (existing_claude_config.content | b64decode | from_json) if claude_config_stat.stat.exists else {} }}"
+
+- name: Add pai-api to Claude Code MCP servers
+  ansible.builtin.set_fact:
+    claude_config: "{{ claude_config | combine({'mcpServers': claude_config.mcpServers | default({}) | combine({mcp_server_name: {'command': deploy_dir + '/run_mcp.fish', 'args': []}})}, recursive=True) }}"
+  when: claude_config_stat.stat.exists
+
+- name: Write updated Claude Code config
+  ansible.builtin.copy:
+    content: "{{ claude_config | to_nice_json }}"
+    dest: "{{ ansible_user_dir }}/.claude.json"
+    owner: "{{ ansible_user_id }}"
+    mode: '0644'
+  when: claude_config_stat.stat.exists
 
 - name: Display MCP configuration status
   ansible.builtin.debug:
@@ -78,4 +89,4 @@
       - "MCP Configuration Complete:"
       - "  Gemini CLI: {{ ansible_user_dir }}/.gemini/settings.json"
       - "  Cursor IDE: {{ ansible_user_dir }}/.cursor/mcp.json"
-      - "  Claude Code: {{ 'Configured' if claude_check.rc == 0 else 'Not installed - skipped' }}"
+      - "  Claude Code: {{ 'Configured' if claude_config_stat.stat.exists else 'Not installed - skipped' }}"
