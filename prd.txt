@@ -1,0 +1,90 @@
+<context>
+# Overview
+The Bob-Patterson Communication Bridge replaces a legacy SSH/File-based message queue with a robust, real-time HTTP API architecture. It enables two local AI systems (Bob and Patterson) to exchange messages, tasks, and context securely over the local network using a standardized protocol, eliminating the fragility of polling and file system permissions.
+
+# Core Features
+1. **Real-time Messaging**: Immediate delivery of messages via HTTP POST.
+2. **API-Based Interface**: RESTful endpoints (`/inbox`, `/health`) for reliable communication.
+3. **Identity Verification**: API Key authentication via `X-PAI-API-Key` header.
+4. **MCP Integration**: Tools for "Send Message" and "Check Status" exposed directly to the AI personalities (Claude).
+5. **Service Discovery**: Support for mDNS (`.local` hostnames) to handle dynamic IPs.
+
+# User Experience
+**Bob (User Perspective)**:
+-   Bob decides to send a message to Patterson.
+-   Bob calls the `send_to_remote` MCP tool.
+-   System handles the transmission instantly.
+-   Bob receives immediate confirmation (or error details).
+
+**Patterson (User Perspective)**:
+-   Patterson receives an incoming request at `/inbox`.
+-   (Future) Patterson is actively notified or finds the message in the context log.
+
+**Human Admin (Grimm)**:
+-   Zero maintenance on file permissions.
+-   Logs available via standard stdout/stderr or log files.
+-   Configuration via `.env`.
+</context>
+<PRD>
+# Technical Architecture
+**System Components**:
+1.  **FastAPI Server**: Runs on port 8000 (configurable). Handles incoming HTTP requests.
+2.  **Auth Layer**: dependency injection to validate `X-PAI-API-Key`.
+3.  **Client Module**: `httpx`-based async client for sending messages with retries and error handling.
+4.  **MCP Server**: Standard Input/Output (stdio) server bridging the Claude desktop app to the Python API client.
+
+**Data Model (Message)**:
+```json
+{
+  "sender": "string",
+  "content": "string",
+  "message_type": "text|task|query",
+  "priority": "normal|high|urgent",
+  "timestamp": "datetime",
+  "context_id": "optional-uuid"
+}
+```
+
+# Development Roadmap
+**Phase 1: Foundation (Completed)**
+-   Project scaffolding and dependency management.
+-   Basic FastAPI server with Health Check.
+-   Authentication middleware.
+
+**Phase 2: Core Communication (Completed)**
+-   `/inbox` endpoint implementation.
+-   Robust HTTP Client with `httpx`.
+-   Unit tests for Server and Client.
+
+**Phase 3: Integration (In Progress)**
+-   MCP Server wrapper implementation.
+-   End-to-end testing between two local instances.
+-   Deployment scripts (`run_server.fish`, `run_mcp.fish`).
+
+**Phase 4: Advanced Features (Future)**
+-   Message persistence (SQLite database).
+-   Context injection (pushing messages directly into the AI's active context window if supported).
+-   Webhooks for third-party integrations.
+
+# Logical Dependency Chain
+1.  **Environment Setup**: Python 3.11+, venv, requirements.
+2.  **Server Core**: Must be running to accept connections.
+3.  **Auth Configuration**: Keys must be generated and synced in `.env`.
+4.  **Client Implementation**: Depends on Server API contract.
+5.  **MCP Wrapper**: Depends on Client function signatures.
+
+# Risks and Mitigations
+1.  **Network Instability**: Local LAN might drop.
+    *Mitigation*: Client implements timeouts and clear error reporting.
+2.  **Security**: API Keys stored in plain text `.env`.
+    *Mitigation*: Files git-ignored. Future: Use system keychain or vault.
+3.  **Dynamic IPs**: Hardcoded IPs break easily.
+    *Mitigation*: Use mDNS (`shale-mini.local`) instead of raw IPs.
+4.  **Port Conflicts**: Port 8000 is common.
+    *Mitigation*: Configurable `PAI_PORT` in environment variables.
+
+# Appendix
+-   **FastAPI Docs**: https://fastapi.tiangolo.com/
+-   **MCP Protocol**: https://modelcontextprotocol.io/
+</PRD>
+
